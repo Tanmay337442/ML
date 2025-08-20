@@ -15,7 +15,7 @@ model = keras.Sequential()
 model.add(layers.Dense(64, activation='relu'))
 model.add(layers.Dense(10, activation='softmax'))
 
-# model.weights returns ValueueError - model has not been built yet
+# model.weights returns ValueError - model has not been built yet
 
 model.build(input_shape=(None, 3))  # specify input shape with any batch size
 model.weights  # now it works

@@ -2,9 +2,10 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.utils import plot_model
 import numpy as np
-import pydot
 
 # Functional API best for complex models - multiple inputs/outputs
+# direct access to layer connectivity - model plotting and feature extraction
+# use if model is direct acyclic graph (DAG) - no cycles or loops
 # system to rank customer support tickets by priority and send to appropriate department
 # inputs: title (text input), body (text input), tags (categorical input, one-hot encoded)
 # outputs: priority score (scalar 0-1 sigmoid), department (softmax over departments)
@@ -29,6 +30,7 @@ department = layers.Dense(num_departments, activation='softmax', name='departmen
 
 model = keras.Model(inputs=[title, text_body, tags], outputs=[priority, department])
 plot_model(model, 'ticket_classifier_shapes.png', show_shapes=True)
+
 # train model
 
 # set number of samples
@@ -86,6 +88,21 @@ priority_preds, department_preds = model.predict(
 # used for model visualization and feature extraction
 
 # visualize connectivity (topology) of model
+# None in input shape means any batch size
 plot_model(model, 'ticket_classifier.png')
 plot_model(model, 'ticket_classifier_shapes.png', show_shapes=True)
 
+# list of layers in model
+print(model.layers)
+# inspect input and output of layer 3 (concatenation layer)
+print("Input of layer 3:", model.layers[3].input)
+print("Output of layer 3:", model.layers[3].output)
+
+# feature extraction - create new model that reuses intermediate features from existing model
+# difficulty rating of ticket
+features = model.layers[4].output # output of layer 4 (dense layer with 64 neurons)
+difficulty = layers.Dense(3, activation='sigmoid', name='difficulty')(features)
+
+# create new model with same inputs and new output
+difficulty_model = keras.Model(inputs=[title, text_body, tags], outputs=[priority, department, difficulty])
+plot_model(difficulty_model, 'ticket_difficulty_classifier.png', show_shapes=True)
